@@ -14,6 +14,7 @@ jobs:
     outputs:
       new_release_published: ${{ steps.semantic_release_version.outputs.new_release_published }}
       new_release_version: ${{ steps.semantic_release_version.outputs.new_release_version }}
+      prerelease: ${{ steps.check-prerelease.outputs.prerelease }}
       
     steps:
       - uses: actions/checkout@v4
@@ -47,6 +48,20 @@ jobs:
           echo Version: ${{ steps.semantic_release_version.outputs.new_release_version }}
           echo new_release_published: ${{ steps.semantic_release_version.outputs.new_release_published }}
 
+      - name: Check pre-release
+        id: check-prerelease
+        run: |
+          if [[ "${{ steps.semantic_release_version.outputs.new_release_version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+      - name: echo prelease
+        run: |
+          echo pre-release: ${{ steps.check-prerelease.outputs.prerelease }}
+
   perform-release:
     needs: check-release
     if: needs.check-release.outputs.new_release_published == 'true'
@@ -60,6 +75,7 @@ jobs:
       new_release_published: ${{ steps.semantic_release.outputs.new_release_published }}
       new_release_version: ${{ steps.semantic_release.outputs.new_release_version }}
       new_release_git_tag: ${{ steps.semantic_release.outputs.new_release_git_tag }}
+      prerelease: ${{ needs.check-release.outputs.prerelease }}
       ig_canonical: ${{ steps.yaml-data.outputs.canonical }}
       ig_id: ${{ steps.yaml-data.outputs.id }}
       ig_asset_filename: ${{ steps.generate-asset-filename.outputs.ig_asset_filename }}
@@ -138,7 +154,7 @@ jobs:
 
   update-package-feed:
     needs: perform-release
-    if: needs.perform-release.outputs.new_release_published == 'true'
+    if: needs.perform-release.outputs.new_release_published == 'true' && needs.perform-release.outputs.prerelease == 'false'
     runs-on: ubuntu-latest
     steps:
       - name: Output new release version
