@@ -2,7 +2,7 @@ name: Release Workflow
 
 on:
   workflow_dispatch:
-    
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -45,6 +45,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Output new release version
+        run: |
+          echo Version: ${{ steps.semantic_release_version.outputs.new_release_version }}
+          echo new_release_published: ${{ steps.semantic_release_version.outputs.new_release_published }}
+
       - name: Update sushi-config.yaml with new version
         run: |
           yq eval '.version = "${{ steps.semantic_release_version.outputs.new_release_version }}"' -i sushi-config.yaml
@@ -61,7 +66,7 @@ jobs:
 
       - name: Generate asset filename
         id: generate-asset-filename
-        run: echo "::set-output name=ig_asset_filename::${{ steps.yaml-data.outputs.id }}-${{ steps.yaml-data.outputs.version }}.tgz"
+        run: echo "::set-output name=ig_asset_filename::${{ steps.yaml-data.outputs.id }}-${{ steps.semantic_release_version.outputs.new_release_version }}.tgz"
 
       # display outputs from read-yaml action
       - name: Display read-yaml output
