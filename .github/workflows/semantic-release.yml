@@ -202,27 +202,15 @@ jobs:
           fi
         shell: bash
 
-      - name: Configure Git
+      - name: Push new branch
         run: |
           cd external-repo
           git config user.name '${{ github.actor }}'
           git config user.email '${{ github.actor }}@users.noreply.github.com'
-  
-      - name: Create new branch
-        run: |
-          cd external-repo
           NEW_BRANCH="update-package-feed-${{ needs.perform-release.outputs.ig_id }}-${{ needs.perform-release.outputs.new_release_version }}"
           git checkout -b $NEW_BRANCH
-  
-      - name: Commit changes
-        run: |
-          cd external-repo
           git add package-feed.xml
           git commit -m "Update package-feed.xml with new release information"
-  
-      - name: Push changes
-        run: |
-          cd external-repo
           git push --set-upstream origin $NEW_BRANCH
   
       - name: Create pull request
