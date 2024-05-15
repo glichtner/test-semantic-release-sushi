@@ -2,34 +2,7 @@ name: Release Workflow
 
 on:
   workflow_dispatch:
-    inputs:
-      releaseType:
-        description: 'Type of release (major, minor, patch, prerelease). Set "auto" for automatic determination.'
-        required: false
-        default: 'auto'
-        type: choice
-        options: 
-        - auto
-        - prerelease
-        - patch
-        - minor
-        - major
-      noop:
-        type: boolean
-        description: 'Run in dry-run mode? Set to "true" to enable.'
-        required: true
-        default: false
-      prerelease_token:
-        type: string
-        description: 'Prerelease token to use for prerelease versions.'
-        required: false
-        default: 'rc'
-      add_branch_date:
-        type: boolean
-        description: 'Add branch and data to release name.'
-        required: false
-        default: false
-
+    
 jobs:
   release:
     runs-on: ubuntu-latest
