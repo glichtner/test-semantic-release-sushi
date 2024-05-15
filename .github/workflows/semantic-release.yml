@@ -212,10 +212,6 @@ jobs:
           git add package-feed.xml
           git commit -m "Update package-feed.xml with new release information"
           git push --set-upstream origin $NEW_BRANCH
-  
-      - name: Create pull request
+          gh pr create --repo umg-minai/fhir-package-feed-test --head $NEW_BRANCH --base main --title "Update package-feed.xml" --body "Automated update of package-feed.xml with new release information"
         env:
           GITHUB_TOKEN: ${{ secrets.FHIR_PACKAGE_FEED_REPO_TOKEN }}
-        run: |
-          gh pr create --repo umg-minai/fhir-package-feed-test --head $NEW_BRANCH --base main --title "Update package-feed.xml" --body "Automated update of package-feed.xml with new release information"
-        shell: bash
