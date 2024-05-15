@@ -150,7 +150,7 @@ jobs:
           mv ./output/package.tgz dist/${{ steps.generate-asset-filename.outputs.ig_asset_filename }}
 
       - name: Deploy to GitHub Pages
-        if: ${{ needs.check-release.outputs.prerelease }} == 'false'
+        if: needs.check-release.outputs.prerelease == 'false'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
