@@ -54,7 +54,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm install @semantic-release/changelog @semantic-release/npm @semantic-release/github
+          npm install @semantic-release/changelog @semantic-release/github
 
       - name: Semantic Release (Determine new version)
         id: semantic-release
@@ -63,7 +63,6 @@ jobs:
           branch: main
           extra_plugins: |
             @semantic-release/changelog
-            @semantic-release/npm
             @semantic-release/github
           dry_run: true
           ci: true
@@ -94,7 +93,6 @@ jobs:
           branch: main
           extra_plugins: |
             @semantic-release/changelog
-            @semantic-release/npm
             @semantic-release/github
           ci: true
         env:
