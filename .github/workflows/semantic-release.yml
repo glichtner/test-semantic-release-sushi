@@ -31,9 +31,13 @@ on:
         default: false
 
 jobs:
-  run-publisher:
+  release:
     runs-on: ubuntu-latest
-
+    concurrency: release
+    permissions:
+      id-token: write
+      contents: write
+        
     steps:
       - uses: actions/checkout@v3
         with:
