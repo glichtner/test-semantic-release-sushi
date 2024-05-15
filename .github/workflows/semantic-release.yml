@@ -30,6 +30,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          sudo snap install yq
           npm install @semantic-release/changelog @semantic-release/github
 
       - name: Semantic Release (Determine new version)
@@ -66,7 +67,7 @@ jobs:
 
       - name: Generate asset filename
         id: generate-asset-filename
-        run: echo "::set-output name=ig_asset_filename::${{ steps.yaml-data.outputs.id }}-${{ steps.semantic_release_version.outputs.new_release_version }}.tgz"
+        run: echo "ig_asset_filename=${{ steps.yaml-data.outputs.id }}-${{ steps.semantic_release_version.outputs.new_release_version }}.tgz" >> $GITHUB_OUTPUT
 
       # display outputs from read-yaml action
       - name: Display read-yaml output
