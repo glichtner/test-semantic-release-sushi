@@ -111,6 +111,11 @@ jobs:
         with:
           args: ./run-ig-publisher.sh
 
+      - name: Move package.tgz to output directory
+        run: |
+          mkdir -p dist/
+          mv ./output/package.tgz dist/${{ steps.generate-asset-filename.outputs.ig_asset_filename }}
+
       - name: Deploy to GitHub Pages
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: peaceiris/actions-gh-pages@v4
