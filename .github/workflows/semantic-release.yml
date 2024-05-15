@@ -57,7 +57,7 @@ jobs:
           npm install @semantic-release/changelog @semantic-release/github
 
       - name: Semantic Release (Determine new version)
-        id: semantic-release
+        id: semantic_release_version
         uses: cycjimmy/semantic-release-action@v4
         with:
           branch: main
@@ -71,7 +71,7 @@ jobs:
 
       - name: Update sushi-config.yaml with new version
         run: |
-          yq eval '.version = "${{ steps.semantic-release.outputs.new_release_version }}"' -i sushi-config.yaml
+          yq eval '.version = "${{ steps.semantic_release_version.outputs.new_release_version }}"' -i sushi-config.yaml
 
       - name: Run the IG publisher
         uses: docker://hl7fhir/ig-publisher-base:latest
@@ -87,6 +87,7 @@ jobs:
           force_orphan: true
 
       - name: Semantic Release (Create release)
+        id: semantic_release
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: cycjimmy/semantic-release-action@v4
         with:
@@ -99,19 +100,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Do something when a new release published
-        if: steps.semantic.outputs.new_release_published == 'true'
+        if: steps.semantic_release.outputs.new_release_published == 'true'
         run: |
-          echo ${{ steps.semantic.outputs.new_release_version }}
-          echo ${{ steps.semantic.outputs.new_release_major_version }}
-          echo ${{ steps.semantic.outputs.new_release_minor_version }}
-          echo ${{ steps.semantic.outputs.new_release_patch_version }}
+          echo ${{ steps.semantic_release.outputs.new_release_version }}
+          echo ${{ steps.semantic_release.outputs.new_release_major_version }}
+          echo ${{ steps.semantic_release.outputs.new_release_minor_version }}
+          echo ${{ steps.semantic_release.outputs.new_release_patch_version }}
 
       # Checkout the external repository where package-feed.xml is located
       - name: Checkout external repository
         uses: actions/checkout@v3
         with:
           repository: 'umg-minai/fhir-package-feed-test'
-          token: ${{ secrets.CUSTOM_GITHUB_TOKEN }} # Ensure this token has access to the external repo
+          token: ${{ secrets.FHIR_PACKAGE_FEED_REPO_TOKEN }} # Ensure this token has access to the external repo
           path: 'external-repo'
 
       # Update package-feed.xml in the external repository
@@ -120,7 +121,7 @@ jobs:
           cd external-repo
           yq eval --inplace '
             .channel.item |= map(
-              if .title == "de.netzwerk-universitaetsmedizin.ebm-cpg#${{ steps.semantic-release.outputs.new_release_version }}" then
+              if .title == "de.netzwerk-universitaetsmedizin.ebm-cpg#${{ steps.semantic_release.outputs.new_release_version }}" then
                 .link = "new link here" # Modify as needed
                 .guid = "new link here" # Modify as needed
                 .pubDate = "$(date -u +"%a, %d %b %Y %H:%M:%S %Z")" # Updates pubDate to current UTC time
