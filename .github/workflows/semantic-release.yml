@@ -81,23 +81,6 @@ jobs:
       ig_asset_filename: ${{ steps.generate-asset-filename.outputs.ig_asset_filename }}
     
     steps:
-
-      - name: echo test 1
-        if: needs.check-release.outputs.new_release_published == 'true' && needs.check-release.outputs.prerelease == 'false'
-        run: echo 1
-
-      - name: echo test 2
-        if: needs.check-release.outputs.new_release_published == true && needs.check-release.outputs.prerelease == 'false'
-        run: echo 2
-
-      - name: echo test 3
-        if: needs.check-release.outputs.new_release_published == 'true' && needs.check-release.outputs.prerelease == false
-        run: echo 3
-
-      - name: echo test 4
-        if: needs.check-release.outputs.new_release_published == true && needs.check-release.outputs.prerelease == false
-        run: echo 4
-
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
