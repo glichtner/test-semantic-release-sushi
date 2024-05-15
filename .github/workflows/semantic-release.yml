@@ -4,19 +4,16 @@ on:
   workflow_dispatch:
 
 jobs:
-  release:
+  check-release:
     runs-on: ubuntu-latest
-    concurrency: release
+    concurrency: check-release
     permissions:
       id-token: write
       contents: write
 
     outputs:
-      new_release_published: ${{ steps.semantic_release.outputs.new_release_published }}
+      new_release_published: ${{ steps.semantic_release_version.outputs.new_release_published }}
       new_release_version: ${{ steps.semantic_release_version.outputs.new_release_version }}
-      ig_canonical: ${{ steps.yaml-data.outputs.canonical }}
-      ig_id: ${{ steps.yaml-data.outputs.id }}
-      ig_asset_filename: ${{ steps.generate-asset-filename.outputs.ig_asset_filename }}
       
     steps:
       - uses: actions/checkout@v4
@@ -45,15 +42,28 @@ jobs:
           ci: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+          
       - name: Output new release version
         run: |
           echo Version: ${{ steps.semantic_release_version.outputs.new_release_version }}
           echo new_release_published: ${{ steps.semantic_release_version.outputs.new_release_published }}
 
+  perform-release:
+    needs: check-release
+    if: needs.check-release.outputs.new_release_published == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      new_release_published: ${{ steps.semantic_release.outputs.new_release_published }}
+      new_release_version: ${{ steps.semantic_release.outputs.new_release_version }}
+      ig_canonical: ${{ steps.yaml-data.outputs.canonical }}
+      ig_id: ${{ steps.yaml-data.outputs.id }}
+      ig_asset_filename: ${{ steps.generate-asset-filename.outputs.ig_asset_filename }}
+    
+    steps:
+
       - name: Update sushi-config.yaml with new version
         run: |
-          yq eval '.version = "${{ steps.semantic_release_version.outputs.new_release_version }}"' -i sushi-config.yaml
+          yq eval '.version = "${{ needs.check-release.outputs.new_release_version }}"' -i sushi-config.yaml
 
       # read id, version and canonical from sushi-config.yaml
       - name: Read YAML file
@@ -68,7 +78,7 @@ jobs:
 
       - name: Generate asset filename
         id: generate-asset-filename
-        run: echo "ig_asset_filename=${{ steps.yaml-data.outputs.id }}-${{ steps.semantic_release_version.outputs.new_release_version }}.tgz" >> $GITHUB_OUTPUT
+        run: echo "ig_asset_filename=${{ steps.yaml-data.outputs.id }}-${{ needs.check-release.outputs.new_release_version }}.tgz" >> $GITHUB_OUTPUT
 
       # display outputs from read-yaml action
       - name: Display read-yaml output
@@ -105,13 +115,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   update-package-feed:
-    needs: release
-    if: needs.release.outputs.new_release_published == 'true'
+    needs: perform-release
+    if: needs.perform-release.outputs.new_release_published == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Output new release version
         run: |
-          echo ${{ needs.release.outputs.new_release_version }}
+          echo ${{ needs.perform-release.outputs.new_release_version }}
 
       - name: Install dependencies
         run: |
@@ -130,10 +140,10 @@ jobs:
         run: |
           cd external-repo
 
-          TITLE="${{ needs.release.outputs.ig_id }}#${{ needs.release.outputs.new_release_version }}"
-          NEW_LINK="https://github.com/${{ github.repository }}/releases/download/${{ needs.release.outputs.new_release_version }}/${{ steps.generate-asset-filename.outputs.ig_asset_filename }}?raw=true"
+          TITLE="${{ needs.perform-release.outputs.ig_id }}#${{ needs.perform-release.outputs.new_release_version }}"
+          NEW_LINK="https://github.com/${{ github.repository }}/releases/download/${{ needs.perform-release.outputs.new_release_version }}/${{ needs.perform-release.outputs.ig_asset_filename }}?raw=true"
           NEW_GUID=NEW_LINK
-          DESCRIPTION="Release ${{ needs.release.outputs.new_release_version }} of ${{ needs.release.outputs.ig_id }}"
+          DESCRIPTION="Release ${{ needs.perform-release.outputs.new_release_version }} of ${{ needs.perform-release.outputs.ig_id }}"
           PUB_DATE=$(date -u +"%a, %d %b %Y %H:%M:%S %Z")
 
           XML_FILE="package-feed.xml"
