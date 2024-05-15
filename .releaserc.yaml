@@ -9,12 +9,8 @@ branches:
     prerelease: true
   - name: alpha
     prerelease: true
-  - name: "feat/**"
-    prerelease: true
-  - name: "fix/**"
-    prerelease: true
-  - name: "perf/**"
-    prerelease: true
+  - name: "+(feat|fix|perf|chore|ci|docs|refactor|test|style)/**"
+    prerelease: "${name.split('/').slice(0, 2).join('-').toLowerCase()}"
 plugins:
   - "@semantic-release/commit-analyzer"
   - "@semantic-release/release-notes-generator"
