@@ -60,7 +60,20 @@ jobs:
       ig_asset_filename: ${{ steps.generate-asset-filename.outputs.ig_asset_filename }}
     
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+
+      - name: Install dependencies
+        run: |
+          sudo snap install yq
+          npm install @semantic-release/changelog @semantic-release/github
+          
       - name: Update sushi-config.yaml with new version
         run: |
           yq eval '.version = "${{ needs.check-release.outputs.new_release_version }}"' -i sushi-config.yaml
