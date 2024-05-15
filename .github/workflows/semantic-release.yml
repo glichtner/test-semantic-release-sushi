@@ -52,6 +52,11 @@ jobs:
     needs: check-release
     if: needs.check-release.outputs.new_release_published == 'true'
     runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: write
+
     outputs:
       new_release_published: ${{ steps.semantic_release.outputs.new_release_published }}
       new_release_version: ${{ steps.semantic_release.outputs.new_release_version }}
@@ -73,7 +78,7 @@ jobs:
         run: |
           sudo snap install yq
           npm install @semantic-release/changelog @semantic-release/github
-          
+
       - name: Update sushi-config.yaml with new version
         run: |
           yq eval '.version = "${{ needs.check-release.outputs.new_release_version }}"' -i sushi-config.yaml
