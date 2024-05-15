@@ -34,7 +34,6 @@ jobs:
         id: semantic_release_version
         uses: cycjimmy/semantic-release-action@v4
         with:
-          branch: main
           extra_plugins: |
             @semantic-release/changelog
             @semantic-release/github
@@ -130,7 +129,6 @@ jobs:
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: cycjimmy/semantic-release-action@v4
         with:
-          branch: main
           extra_plugins: |
             @semantic-release/changelog
             @semantic-release/github
