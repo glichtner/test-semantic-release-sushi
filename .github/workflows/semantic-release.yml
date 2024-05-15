@@ -60,6 +60,7 @@ jobs:
     outputs:
       new_release_published: ${{ steps.semantic_release.outputs.new_release_published }}
       new_release_version: ${{ steps.semantic_release.outputs.new_release_version }}
+      new_release_git_tag: ${{ steps.semantic_release.outputs.new_release_git_tag }}
       ig_canonical: ${{ steps.yaml-data.outputs.canonical }}
       ig_id: ${{ steps.yaml-data.outputs.id }}
       ig_asset_filename: ${{ steps.generate-asset-filename.outputs.ig_asset_filename }}
@@ -164,7 +165,7 @@ jobs:
           cd external-repo
 
           TITLE="${{ needs.perform-release.outputs.ig_id }}#${{ needs.perform-release.outputs.new_release_version }}"
-          NEW_LINK="https://github.com/${{ github.repository }}/releases/download/${{ needs.perform-release.outputs.new_release_version }}/${{ needs.perform-release.outputs.ig_asset_filename }}?raw=true"
+          NEW_LINK="https://github.com/${{ github.repository }}/releases/download/${{ needs.perform-release.outputs.new_release_git_tag }}/${{ needs.perform-release.outputs.ig_asset_filename }}?raw=true"
           NEW_GUID=$NEW_LINK
           DESCRIPTION="Release ${{ needs.perform-release.outputs.new_release_version }} of ${{ needs.perform-release.outputs.ig_id }}"
           PUB_DATE=$(date -u +"%a, %d %b %Y %H:%M:%S %Z")
