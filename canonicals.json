@@ -1,0 +1,16 @@
+[
+  {
+    "id" : "fhir.example",
+    "type" : "ImplementationGuide",
+    "url" : "http://example.org/ImplementationGuide/fhir.example",
+    "version" : "1.8.0",
+    "name" : "ExampleIG"
+  },
+  {
+    "id" : "MyPatient",
+    "type" : "StructureDefinition",
+    "url" : "http://example.org/StructureDefinition/MyPatient",
+    "version" : "1.8.0",
+    "name" : "MyPatient"
+  }
+]
