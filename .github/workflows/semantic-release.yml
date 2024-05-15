@@ -55,15 +55,15 @@ jobs:
                 prerelease: true
               },
               {
-                name: '^feat/.*',
+                name: 'feat/.*',
                 prerelease: true
               },
               {
-                name: '^fix/.*',
+                name: 'fix/.*',
                 prerelease: true
               },
               {
-                name: '^perf/.*',
+                name: 'perf/.*',
                 prerelease: true
               }
             ]
