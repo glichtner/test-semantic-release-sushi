@@ -56,14 +56,15 @@ jobs:
           yq eval '.version = "${{ steps.semantic_release_version.outputs.new_release_version }}"' -i sushi-config.yaml
 
       # read id, version and canonical from sushi-config.yaml
-      - name: Run read-yaml action
+      - name: Read YAML file
         id: yaml-data
-        uses: CumulusDS/get-yaml-paths-action@v1.0.1
-        with:
-          file: sushi-config.yaml
-          version: version
-          canonical: canonical
-          id: id
+        run: |
+          VERSION=$(yq eval '.version' sushi-config.yaml)
+          ID=$(yq eval '.id' sushi-config.yaml)
+          CANONICAL=$(yq eval '.canonical' sushi-config.yaml)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "id=$ID" >> $GITHUB_OUTPUT
+          echo "canonical=$CANONICAL" >> $GITHUB_OUTPUT
 
       - name: Generate asset filename
         id: generate-asset-filename
@@ -170,6 +171,7 @@ jobs:
         run: |
           cd external-repo
           git config user.name '${{ github.actor }}'
+          git config user.email '${{ github.actor }}@users.noreply.github.com'
           git add package-feed.xml
           git commit -m "Update package-feed.xml with new release information"
           git push
