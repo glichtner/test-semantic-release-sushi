@@ -1,0 +1,108 @@
+name: Release Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      releaseType:
+        description: 'Type of release (major, minor, patch, prerelease). Set "auto" for automatic determination.'
+        required: false
+        default: 'auto'
+        type: choice
+        options: 
+        - auto
+        - prerelease
+        - patch
+        - minor
+        - major
+      noop:
+        type: boolean
+        description: 'Run in dry-run mode? Set to "true" to enable.'
+        required: true
+        default: false
+      prerelease_token:
+        type: string
+        description: 'Prerelease token to use for prerelease versions.'
+        required: false
+        default: 'rc'
+      add_branch_date:
+        type: boolean
+        description: 'Add branch and data to release name.'
+        required: false
+        default: false
+
+jobs:
+  run-publisher:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+
+      - name: Install yq
+        run: |
+          sudo snap install yq
+
+      - name: Install dependencies
+        run: |
+          npm install @semantic-release/changelog @semantic-release/npm @semantic-release/github
+
+      - name: Semantic Release (Determine new version)
+        id: semantic-release
+        uses: cycjimmy/semantic-release-action@v2
+        with:
+          semantic_version: 2
+          branch: main
+          extra_plugins: |
+            @semantic-release/changelog
+            @semantic-release/npm
+            @semantic-release/github
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          dry_run: true
+        env:
+          CI: true
+
+      - name: Update sushi-config.yaml with new version
+        run: |
+          yq eval '.version = "${{ steps.semantic-release.outputs.new_version }}"' -i sushi-config.yaml
+
+      - name: Run the IG publisher
+        uses: docker://hl7fhir/ig-publisher-base:latest
+        with:
+          args: ./run-ig-publisher.sh ${{ steps.semantic-release.outputs.new_version }}
+
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./output
+          force_orphan: true
+
+      - name: Semantic Release (Create release)
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        uses: cycjimmy/semantic-release-action@v2
+        with:
+          semantic_version: 2
+          branch: main
+          extra_plugins: |
+            @semantic-release/changelog
+            @semantic-release/npm
+            @semantic-release/github
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          CI: true
+
+      - name: Upload Package to GitHub Release
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.semantic-release.outputs.github_release_upload_url }}
+          asset_path: ./output/package.tgz
+          asset_name: sushi-config-${{ steps.semantic-release.outputs.new_version }}.tgz
+          asset_content_type: application/gzip
