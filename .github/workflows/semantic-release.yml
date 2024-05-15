@@ -160,9 +160,12 @@ jobs:
 
           TITLE="${{ needs.perform-release.outputs.ig_id }}#${{ needs.perform-release.outputs.new_release_version }}"
           NEW_LINK="https://github.com/${{ github.repository }}/releases/download/${{ needs.perform-release.outputs.new_release_version }}/${{ needs.perform-release.outputs.ig_asset_filename }}?raw=true"
-          NEW_GUID=NEW_LINK
+          NEW_GUID=$NEW_LINK
           DESCRIPTION="Release ${{ needs.perform-release.outputs.new_release_version }} of ${{ needs.perform-release.outputs.ig_id }}"
           PUB_DATE=$(date -u +"%a, %d %b %Y %H:%M:%S %Z")
+          VERSION="${{ needs.perform-release.outputs.new_release_version }}"
+          CREATOR="${{ github.actor }}"
+          KIND="IG"
 
           XML_FILE="package-feed.xml"
           ITEM_EXISTS=$(xmlstarlet sel -t -v "count(/rss/channel/item[title='$TITLE'])" $XML_FILE)
@@ -175,9 +178,9 @@ jobs:
               -s "//item[last()]" -t elem -n description -v "$DESCRIPTION" \
               -s "//item[last()]" -t elem -n link -v "$NEW_LINK" \
               -s "//item[last()]" -t elem -n guid -v "$NEW_GUID" \
-              -s "//item[last()]" -t elem -n dc:creator -v "$NEW_GUID" \
-              -s "//item[last()]" -t elem -n fhir:version -v "$NEW_GUID" \
-              -s "//item[last()]" -t elem -n fhir:kind -v "IG" \
+              -s "//item[last()]" -t elem -n dc:creator -v "$CREATOR" \
+              -s "//item[last()]" -t elem -n fhir:version -v "$VERSION" \
+              -s "//item[last()]" -t elem -n fhir:kind -v "$KIND" \
               -s "//item[last()]" -t elem -n pubDate -v "$PUB_DATE" \
               $XML_FILE
           else
@@ -186,9 +189,9 @@ jobs:
               -u "/rss/channel/item[title='$TITLE']/link" -v "$NEW_LINK" \
               -u "/rss/channel/item[title='$TITLE']/guid" -v "$NEW_GUID" \
               -u "/rss/channel/item[title='$TITLE']/description" -v "$DESCRIPTION" \
-              -u "/rss/channel/item[title='$TITLE']/dc:creator" -v "$NEW_GUID" \
-              -u "/rss/channel/item[title='$TITLE']/fhir:version" -v "$NEW_GUID" \
-              -u "/rss/channel/item[title='$TITLE']/fhir:kind" -v "IG" \
+              -u "/rss/channel/item[title='$TITLE']/dc:creator" -v "$CREATOR" \
+              -u "/rss/channel/item[title='$TITLE']/fhir:version" -v "$VERSION" \
+              -u "/rss/channel/item[title='$TITLE']/fhir:kind" -v "$KIND" \
               -u "/rss/channel/item[title='$TITLE']/pubDate" -v "$PUB_DATE" \
               $XML_FILE
           fi
