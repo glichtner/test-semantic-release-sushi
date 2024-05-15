@@ -42,7 +42,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: "lts/*"
 
       - name: Install yq
         run: |
@@ -54,27 +54,26 @@ jobs:
 
       - name: Semantic Release (Determine new version)
         id: semantic-release
-        uses: cycjimmy/semantic-release-action@v2
+        uses: cycjimmy/semantic-release-action@v4
         with:
-          semantic_version: 2
           branch: main
           extra_plugins: |
             @semantic-release/changelog
             @semantic-release/npm
             @semantic-release/github
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           dry_run: true
+          ci: true
         env:
-          CI: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update sushi-config.yaml with new version
         run: |
-          yq eval '.version = "${{ steps.semantic-release.outputs.new_version }}"' -i sushi-config.yaml
+          yq eval '.version = "${{ steps.semantic-release.outputs.new_release_version }}"' -i sushi-config.yaml
 
       - name: Run the IG publisher
         uses: docker://hl7fhir/ig-publisher-base:latest
         with:
-          args: ./run-ig-publisher.sh ${{ steps.semantic-release.outputs.new_version }}
+          args: ./run-ig-publisher.sh
 
       - name: Deploy to GitHub Pages
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
@@ -86,23 +85,53 @@ jobs:
 
       - name: Semantic Release (Create release)
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-        uses: cycjimmy/semantic-release-action@v2
+        uses: cycjimmy/semantic-release-action@v4
         with:
-          semantic_version: 2
           branch: main
           extra_plugins: |
             @semantic-release/changelog
             @semantic-release/npm
             @semantic-release/github
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          ci: true
         env:
-          CI: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Package to GitHub Release
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-        uses: actions/upload-release-asset@v1
+      - name: Do something when a new release published
+        if: steps.semantic.outputs.new_release_published == 'true'
+        run: |
+          echo ${{ steps.semantic.outputs.new_release_version }}
+          echo ${{ steps.semantic.outputs.new_release_major_version }}
+          echo ${{ steps.semantic.outputs.new_release_minor_version }}
+          echo ${{ steps.semantic.outputs.new_release_patch_version }}
+
+      # Checkout the external repository where package-feed.xml is located
+      - name: Checkout external repository
+        uses: actions/checkout@v3
         with:
-          upload_url: ${{ steps.semantic-release.outputs.github_release_upload_url }}
-          asset_path: ./output/package.tgz
-          asset_name: sushi-config-${{ steps.semantic-release.outputs.new_version }}.tgz
-          asset_content_type: application/gzip
+          repository: 'umg-minai/fhir-package-feed-test'
+          token: ${{ secrets.CUSTOM_GITHUB_TOKEN }} # Ensure this token has access to the external repo
+          path: 'external-repo'
+
+      # Update package-feed.xml in the external repository
+      - name: Update package-feed.xml
+        run: |
+          cd external-repo
+          yq eval --inplace '
+            .channel.item |= map(
+              if .title == "de.netzwerk-universitaetsmedizin.ebm-cpg#${{ steps.semantic-release.outputs.new_release_version }}" then
+                .link = "new link here" # Modify as needed
+                .guid = "new link here" # Modify as needed
+                .pubDate = "$(date -u +"%a, %d %b %Y %H:%M:%S %Z")" # Updates pubDate to current UTC time
+              else .
+              end
+            )' package-feed.xml
+
+      # Commit and push the changes to the external repository
+      - name: Commit and push changes
+        run: |
+          cd external-repo
+          git config user.name 'GitHub Actions'
+          git config user.email 'actions@github.com'
+          git add package-feed.xml
+          git commit -m "Update package-feed.xml with new release information"
+          git push
