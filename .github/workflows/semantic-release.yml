@@ -183,6 +183,7 @@ jobs:
               -u "/rss/channel/item[title='$TITLE']/fhir:kind" -v "IG" \
               -u "/rss/channel/item[title='$TITLE']/pubDate" -v "$PUB_DATE" \
               $XML_FILE
+          fi
         shell: bash
 
       # Commit and push the changes to the external repository
